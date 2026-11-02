@@ -1,9 +1,12 @@
 # Zoo Visitors API
 
-FastAPI service that reads the real XLSX resource for fiscal year 2569 from
-[Data.go.th](https://data.go.th/dataset/zoo-visitors2569) on each request. The
-returned `statistics` use the source workbook's original column names and values;
-no visitor counts are generated or hard-coded.
+FastAPI service that reads the official fiscal-year-2569 XLSX resource from
+[Data.go.th](https://data.go.th/dataset/zoo-visitors2569). The source workbook
+([`zoo-visitors-2569.xlsx`](./zoo-visitors-2569.xlsx)) is included in the
+repository so the deployed service does not depend on Data.go.th allowing
+outbound downloads from its hosting provider. The returned `statistics` use the
+source workbook's original column names and values; no visitor counts are
+generated or hard-coded.
 
 ## Run locally
 
@@ -61,5 +64,6 @@ returns the complete worksheet rows and all non-empty source columns.
 ```
 
 The example shows one entry for readability; the live endpoint returns all source
-records. A Postman screenshot and a public deployment URL must be produced in the
-environment where the service is run/deployed.
+records. The workbook is a copy of the Data.go.th resource and reflects the data
+available when it was downloaded. If the government resource is updated, download
+the new XLSX, replace this file, and redeploy.

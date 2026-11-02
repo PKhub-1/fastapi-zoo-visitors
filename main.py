@@ -1,7 +1,6 @@
 import asyncio
 from io import BytesIO
-from urllib.error import URLError
-from urllib.request import Request, urlopen
+from pathlib import Path
 from zipfile import BadZipFile
 
 from fastapi import FastAPI, HTTPException
@@ -16,18 +15,11 @@ app = FastAPI(
 
 DATASET_URL = "https://data.go.th/dataset/zoo-visitors2569"
 RESOURCE_ID = "0ecc96cf-d914-42a1-b184-dbbd013c3c9c"
-RESOURCE_URL = (
-    "https://data.go.th/dataset/970c2632-1669-44aa-80c5-2c20cb2295e4/"
-    "resource/0ecc96cf-d914-42a1-b184-dbbd013c3c9c/download/-.-..69.xlsx"
-)
+RESOURCE_FILE = Path(__file__).with_name("zoo-visitors-2569.xlsx")
 
 
 def _read_statistics() -> list[dict[str, object]]:
-    request = Request(RESOURCE_URL, headers={"User-Agent": "ZooVisitorsAPI/1.0"})
-    with urlopen(request, timeout=20) as response:
-        workbook_data = response.read()
-
-    workbook = load_workbook(BytesIO(workbook_data), data_only=True, read_only=True)
+    workbook = load_workbook(RESOURCE_FILE, data_only=True, read_only=True)
     try:
         if "statistics" not in workbook.sheetnames:
             raise ValueError("The source workbook does not contain a statistics sheet.")
@@ -61,10 +53,10 @@ def _read_statistics() -> list[dict[str, object]]:
 async def get_zoo_visitors() -> dict[str, object]:
     try:
         statistics = await asyncio.to_thread(_read_statistics)
-    except (URLError, TimeoutError, OSError, BadZipFile, InvalidFileException, ValueError) as exc:
+    except (OSError, BadZipFile, InvalidFileException, ValueError) as exc:
         raise HTTPException(
-            status_code=502,
-            detail=f"ไม่สามารถอ่านข้อมูลจาก Data.go.th ได้: {exc}",
+            status_code=500,
+            detail=f"ไม่สามารถอ่านไฟล์ข้อมูลจาก Data.go.th ได้: {exc}",
         ) from exc
 
     return {
@@ -72,6 +64,7 @@ async def get_zoo_visitors() -> dict[str, object]:
         "dataset": "zoo-visitors2569",
         "dataset_url": DATASET_URL,
         "resource_id": RESOURCE_ID,
+        "data_file": RESOURCE_FILE.name,
         "fiscal_year": 2569,
         "record_count": len(statistics),
         "statistics": statistics,
